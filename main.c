@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
         }
         editor_lines_array_append(&E->lines, empty_line);
         editor_update_syntax(0);
-        editor_set_status_message("ErwinText simple text editor! Press Ctrl+Q to quit. Ctrl+S to save. Ctrl+F to find.");
+        editor_set_status_message("ErwinText: Press Ctrl+Q to quit. Ctrl+S to save. Ctrl+F to find.");
     }
     
     editor_refresh_screen();
