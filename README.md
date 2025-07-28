@@ -12,6 +12,23 @@ make
 
 This will create an executable named `erwintext`.
 
+### Installation
+
+To install ErwinText system-wide, run:
+
+```bash
+sudo make install
+```
+
+This will copy the `erwintext` executable to `/usr/local/bin`.
+
+To uninstall, run:
+
+```bash
+sudo make uninstall
+```
+
+
 ## Running
 
 To run ErwinText, execute the following command:

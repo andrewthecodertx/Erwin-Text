@@ -21,3 +21,9 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(OBJS) $(TARGET)
+
+install: all
+	cp $(TARGET) /usr/local/bin
+
+uninstall:
+	rm -f /usr/local/bin/$(TARGET)
