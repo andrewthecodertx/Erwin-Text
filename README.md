@@ -28,7 +28,6 @@ To uninstall, run:
 sudo make uninstall
 ```
 
-
 ## Running
 
 To run ErwinText, execute the following command:
@@ -38,3 +37,11 @@ To run ErwinText, execute the following command:
 ```
 
 Replace `[filename]` with the path to the file you want to open or create.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
