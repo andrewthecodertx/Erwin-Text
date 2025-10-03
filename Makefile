@@ -1,4 +1,4 @@
-CC = gc
+CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99 -g -D_POSIX_C_SOURCE=200809L
 LDFLAGS = -lncurses
 
