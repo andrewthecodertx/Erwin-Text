@@ -1,25 +1,25 @@
 # ErwinText
 
-ErwinText is a simple, lightweight text editor built in C using the ncurses library. It aims to provide a classic terminal-based editing experience with essential features for developers and writers.
+ErwinText is a simple, lightweight text editor built in C using the ncurses
+library. It aims to provide a classic terminal-based editing experience with
+essential features for developers and writers.
 
 ## Features
 
-*   **Syntax Highlighting:** Supports C, C++, Shell Scripts, JavaScript, HTML, CSS, and XML.
-*   **File Management:** Create, open, and save files.
-*   **Basic Editing:** Insert, delete, and modify text.
-*   **Search:** Find text within a file.
-*   **Undo:** Revert recent changes.
-*   **Clipboard Integration:** Paste from the system clipboard (requires `xclip` or `wl-paste`).
-*   **Mouse Support:** Click to position the cursor and use the scroll wheel.
-*   **Select All:** Select all text for quick deletion.
+* **Syntax Highlighting:** Supports C, C++, Shell Scripts, JavaScript, HTML,
+CSS, and XML.
+* **File Management:** Create, open, and save files.
+* **Basic Editing:** Insert, delete, and modify text.
+* **Search:** Find text within a file.
+* **Undo:** Revert recent changes.
+* **Clipboard Integration:** Paste from the system clipboard (requires `xclip`
+or `wl-paste`).
+* **Mouse Support:** Click to position the cursor and use the scroll wheel.
+* **Select All:** Select all text for quick deletion.
 
 ## Building
 
-To build ErwinText, you'll need `ncurses` installed. On Debian-based systems, you can install it with:
-
-```bash
-sudo apt-get install libncurses-dev
-```
+To build ErwinText, you'll need `ncurses` installed.
 
 Then, simply run `make` in the project root directory:
 
@@ -53,7 +53,8 @@ To run ErwinText, execute the following command:
 ./erwintext [filename]
 ```
 
-Replace `[filename]` with the path to the file you want to open or create. If no filename is provided, ErwinText will start with an empty buffer.
+Replace `[filename]` with the path to the file you want to open or create. If
+no filename is provided, ErwinText will start with an empty buffer.
 
 ## Keybindings
 
@@ -74,7 +75,8 @@ Replace `[filename]` with the path to the file you want to open or create. If no
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for
+details.
 
 ## Contributing
 
