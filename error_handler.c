@@ -26,7 +26,7 @@ void editor_handle_error(EditorErrorCode code, const char* fmt, ...)
     editor_set_status_message("ERROR: %s", user_message);
     va_end(ap);
 
-// 3. Decide on termination based on error code or severity
+    // 3. Decide on termination based on error code or severity
     if (code == ERR_OUT_OF_MEMORY || code == ERR_FILE_OPERATION)
     {
         EditorConfig* E = get_editor_config();
