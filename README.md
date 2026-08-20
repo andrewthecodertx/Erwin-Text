@@ -84,14 +84,15 @@ no filename is provided, ErwinText will start with an empty buffer.
 
 | Keybinding        | Action                  |
 | ----------------- | ----------------------- |
-| `Ctrl+Q` / `Ctrl+C` | Quit                    |
+| `Ctrl+Q`          | Quit                    |
 | `Ctrl+S`          | Save File               |
 | `Ctrl+F`          | Find (Search)           |
 | `Ctrl+A`          | Select All              |
+| `Ctrl+C`          | Copy Selection          |
 | `Ctrl+V`          | Paste from Clipboard    |
 | `Ctrl+Z`          | Undo                    |
 | Arrow Keys        | Move Cursor             |
-| `Shift+Arrows`    | Select Text             |
+| `Shift` + `Arrows` / `Home` / `End` / `PgUp` / `PgDn` | Select Text |
 | `Home` / `End`      | Go to Start/End of Line |
 | `Page Up` / `Page Down` | Move Page Up/Down       |
 | `Backspace` / `Del` | Delete Character        |
@@ -99,6 +100,11 @@ no filename is provided, ErwinText will start with an empty buffer.
 | Mouse Wheel       | Scroll Up/Down          |
 
 ## Version History
+
+### v0.3.0 (2026-08-20)
+- **Portable builds & macOS support** — `make debug` (ASan+UBSan) / `release` / `tsan` targets, per-config `build/` dirs, header dependency tracking, pkg-config ncurses detection, configurable `PREFIX`/`BINDIR`/`DESTDIR`, `KEY_RESIZE` handling, expanded CI (Linux+macOS, static analysis) (PR #29)
+- **Non-fatal error handling** — OOM/file errors no longer call `exit(1)`; editor stays open with a critical error bar, allowing Ctrl+S to save and Ctrl+Q to quit safely (PR #27, fixes #4)
+- **Clipboard copy** — `Ctrl+C` copies the active selection (or select-all) to the system clipboard via `wl-copy` (Wayland) or `xclip` (X11); selection extended to `Shift`+`Home`/`End`/`PgUp`/`PgDn` (PR #30)
 
 ### v0.2.0 (2026-07-27)
 - **Growable prompt buffer** — removed 128-byte limit on search/save-as prompts (PR #22)
@@ -110,6 +116,12 @@ no filename is provided, ErwinText will start with an empty buffer.
 - Initial release with basic editing, syntax highlighting, search, undo, clipboard, and mouse support.
 
 ## Contributors
+
+Thanks to the following contributors for their work on v0.3.0:
+
+- [Enzo Gagarin](https://github.com/enzogagarin) — Portable build targets & macOS support (PR #29)
+- [Kampito Jha](https://github.com/kampitojha) — Non-fatal error handling (PR #27)
+- [Paulo Ferlin](https://github.com/paulorf0) — Clipboard copy & extended selection (PR #30)
 
 Thanks to the following contributors for their work on v0.2.0:
 
