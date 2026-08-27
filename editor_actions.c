@@ -14,7 +14,8 @@ void editor_action_free(EditorAction* action)
     {
         return;
     }
-    if (action->type == ACTION_DELETE_LINE && action->line_content != NULL)
+    if ((action->type == ACTION_DELETE_LINE || action->type == ACTION_DELETE_RANGE) &&
+        action->line_content != NULL)
     {
         free(action->line_content);
         action->line_content = NULL;

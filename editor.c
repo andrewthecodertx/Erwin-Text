@@ -192,11 +192,8 @@ void editor_move_cursor(int key)
         }
         else if (line && (size_t) E.cx == line->len && E.cy < E.lines.size - 1)
         {
-            if (line && (size_t) E.cx == line->len && E.cy < E.lines.size - 1)
-            {
-                E.cy++;
-                E.cx = 0;
-            }
+            E.cy++;
+            E.cx = 0;
         }
         break;
     case KEY_UP:
@@ -328,6 +325,39 @@ char* editor_get_selected_text(EditorSelectionRange range)
     text[pos] = '\0';
 
     return text;
+}
+
+void editor_delete_range(EditorSelectionRange range)
+{
+    char* text = editor_get_selected_text(range);
+    if (text == NULL)
+    {
+        return;
+    }
+    size_t len = strlen(text);
+
+    EditorAction action = {.type = ACTION_DELETE_RANGE,
+                           .row = range.start_row,
+                           .col = range.start_col,
+                           .line_content = text,
+                           .line_len = len};
+    editor_record_action(action);
+
+    // Avoid editor_del_char()'s select-all shortcut (editor.c:881-898), which
+    // wipes the whole buffer in one call and would break the loop count below.
+    E.select_all_active = 0;
+
+    E.cy = range.end_row;
+    E.cx = range.end_col;
+
+    E.recording_actions = false;
+    for (size_t i = 0; i < len; i++)
+    {
+        editor_del_char();
+    }
+    E.recording_actions = true;
+
+    E.dirty = 1;
 }
 
 static void editor_send_to_clipboard(const char* text, size_t len)
@@ -503,6 +533,30 @@ void editor_process_keypress(void)
             {
                 editor_send_to_clipboard(txt, strlen(txt));
                 free(txt);
+            }
+        }
+
+        editor_clear_selection();
+        break;
+    }
+
+    case CTRL('x'):
+    {
+        EditorSelectionRange esr;
+        int status = editor_get_selection_range(&esr);
+        if (!status)
+        {
+            editor_set_status_message("Nothing to cut.");
+        }
+        else
+        {
+            char* txt = editor_get_selected_text(esr);
+
+            if (txt != NULL)
+            {
+                editor_send_to_clipboard(txt, strlen(txt));
+                free(txt);
+                editor_delete_range(esr);
             }
         }
 
@@ -973,6 +1027,27 @@ void editor_undo(void)
             editor_update_syntax(E.cy);
         }
         break;
+    case ACTION_DELETE_RANGE:
+        // Undo delete range: reinsert recorded text at the recorded position
+        E.cy = last_action.row;
+        E.cx = last_action.col;
+        for (size_t i = 0; i < last_action.line_len; i++)
+        {
+            char ch = last_action.line_content[i];
+            if (ch == '\n')
+            {
+                editor_insert_newline();
+            }
+            else
+            {
+                editor_insert_char(ch);
+            }
+        }
+        // Transfer ownership: clear the action's line_content to avoid double-free
+        E.undo_history[E.undo_history_idx].line_content = NULL;
+        E.dirty = 1;
+        editor_update_syntax(E.cy);
+        break;
     default:
         editor_set_status_message("Undo: Unknown action type.");
         break;
@@ -1254,3 +1329,4 @@ void editor_record_action(EditorAction action)
     E.undo_history_len++;
     E.undo_history_idx++;
 }
+
