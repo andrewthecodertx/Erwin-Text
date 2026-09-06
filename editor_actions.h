@@ -22,7 +22,7 @@ typedef struct
     int col;
     char character;     // For insert/delete char
     char* line_content; // For delete line/range (stores content of deleted text;
-                         // for ACTION_DELETE_RANGE, '\n' marks line breaks within the range)
+                        // for ACTION_DELETE_RANGE, '\n' marks line breaks within the range)
     size_t line_len;    // For delete line/range (stores length of deleted text)
 } EditorAction;
 

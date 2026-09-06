@@ -343,13 +343,19 @@ void editor_delete_range(EditorSelectionRange range)
                            .line_len = len};
     editor_record_action(action);
 
-    // Avoid editor_del_char()'s select-all shortcut (editor.c:881-898), which
-    // wipes the whole buffer in one call and would break the loop count below.
+    // Avoid editor_del_char()'s select-all shortcut, which wipes the whole buffer
+    // in one call and would break the loop count below.
     E.select_all_active = 0;
 
     E.cy = range.end_row;
     E.cx = range.end_col;
 
+    // FIX: ranges spanning a line break delete the wrong characters. Deleting
+    // backwards assumes editor_del_char() leaves the cursor at the join, but its
+    // merge branch adds line->len to prev_line->len before reading it back into
+    // E.cx, parking the cursor at the end of the merged line: cutting "bc\nde" out
+    // of "abc"/"def" yields "ab", not "af". Root cause is pre-existing in
+    // editor_del_char() (plain Backspace hits it too) and tracked separately.
     E.recording_actions = false;
     for (size_t i = 0; i < len; i++)
     {
@@ -358,6 +364,75 @@ void editor_delete_range(EditorSelectionRange range)
     E.recording_actions = true;
 
     E.dirty = 1;
+}
+
+// Newline-terminated so that pasting a line-wise copy lands as its own line.
+static char* editor_current_line_text(void)
+{
+    if (E.cy >= E.lines.size)
+    {
+        return NULL;
+    }
+
+    EditorLine* line = &E.lines.elements[E.cy];
+    char* text = malloc(line->len + 2);
+    if (text == NULL)
+    {
+        editor_handle_error(ERR_OUT_OF_MEMORY, "Out of memory copying current line.");
+        return NULL;
+    }
+
+    memcpy(text, line->text, line->len);
+    text[line->len] = '\n';
+    text[line->len + 1] = '\0';
+
+    return text;
+}
+
+static void editor_delete_current_line(void)
+{
+    if (E.cy >= E.lines.size)
+    {
+        return;
+    }
+
+    // A buffer always holds at least one line, so the last one is emptied in place
+    // rather than removed. ACTION_DELETE_RANGE undoes that by reinserting the
+    // characters, which ACTION_DELETE_LINE (an insert of a new line) could not.
+    if (E.lines.size == 1)
+    {
+        if (E.lines.elements[0].len == 0)
+        {
+            return;
+        }
+        EditorSelectionRange range = {
+            .start_row = 0, .start_col = 0, .end_row = 0, .end_col = E.lines.elements[0].len};
+        editor_delete_range(range);
+        return;
+    }
+
+    EditorLine* line = &E.lines.elements[E.cy];
+    EditorAction action = {.type = ACTION_DELETE_LINE,
+                           .row = E.cy,
+                           .col = 0,
+                           .line_content = strdup(line->text),
+                           .line_len = line->len};
+    if (action.line_content == NULL)
+    {
+        editor_handle_error(ERR_OUT_OF_MEMORY, "Out of memory cutting current line.");
+        return;
+    }
+    editor_record_action(action);
+
+    editor_lines_array_delete(&E.lines, E.cy);
+
+    if (E.cy >= E.lines.size)
+    {
+        E.cy = E.lines.size - 1;
+    }
+    E.cx = 0;
+    E.dirty = 1;
+    editor_update_syntax(E.cy);
 }
 
 static void editor_send_to_clipboard(const char* text, size_t len)
@@ -520,20 +595,12 @@ void editor_process_keypress(void)
     case CTRL('c'):
     {
         EditorSelectionRange esr;
-        int status = editor_get_selection_range(&esr);
-        if (!status)
+        char* txt = editor_get_selection_range(&esr) ? editor_get_selected_text(esr)
+                                                     : editor_current_line_text();
+        if (txt != NULL)
         {
-            editor_set_status_message("Nothing to copy.");
-        }
-        else
-        {
-            char* txt = editor_get_selected_text(esr);
-
-            if (txt != NULL)
-            {
-                editor_send_to_clipboard(txt, strlen(txt));
-                free(txt);
-            }
+            editor_send_to_clipboard(txt, strlen(txt));
+            free(txt);
         }
 
         editor_clear_selection();
@@ -543,12 +610,7 @@ void editor_process_keypress(void)
     case CTRL('x'):
     {
         EditorSelectionRange esr;
-        int status = editor_get_selection_range(&esr);
-        if (!status)
-        {
-            editor_set_status_message("Nothing to cut.");
-        }
-        else
+        if (editor_get_selection_range(&esr))
         {
             char* txt = editor_get_selected_text(esr);
 
@@ -557,6 +619,17 @@ void editor_process_keypress(void)
                 editor_send_to_clipboard(txt, strlen(txt));
                 free(txt);
                 editor_delete_range(esr);
+            }
+        }
+        else
+        {
+            char* txt = editor_current_line_text();
+
+            if (txt != NULL)
+            {
+                editor_send_to_clipboard(txt, strlen(txt));
+                free(txt);
+                editor_delete_current_line();
             }
         }
 
@@ -1043,7 +1116,10 @@ void editor_undo(void)
                 editor_insert_char(ch);
             }
         }
-        // Transfer ownership: clear the action's line_content to avoid double-free
+        // Unlike ACTION_DELETE_LINE, nothing takes ownership here: the characters were
+        // reinserted one by one, so the recorded text has to be freed. Clearing the
+        // slot keeps cleanup_editor() from freeing it a second time.
+        free(E.undo_history[E.undo_history_idx].line_content);
         E.undo_history[E.undo_history_idx].line_content = NULL;
         E.dirty = 1;
         editor_update_syntax(E.cy);
@@ -1329,4 +1405,3 @@ void editor_record_action(EditorAction action)
     E.undo_history_len++;
     E.undo_history_idx++;
 }
-
