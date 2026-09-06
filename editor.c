@@ -837,7 +837,7 @@ void editor_del_char(void)
     EditorLine* line = &E.lines.elements[E.cy];
     if (E.cx > 0)
     {
-        memmove(&line->text[E.cx - 1], &line->text[E.cx], line->len - E.cx + 1);
+        memmove(&line->text[E.cx - 1], &line->text[E.cx], line->len - E.cx + 1); //
         line->len--;
         line->text = realloc(line->text, line->len + 1);
         if (line->text == NULL)
@@ -861,6 +861,7 @@ void editor_del_char(void)
                 return;
             }
             memcpy(&prev_line->text[prev_line->len], line->text, line->len);
+            int ecx_prevline = prev_line->len;
             prev_line->len += line->len;
             prev_line->text[prev_line->len] = '\0';
 
@@ -881,7 +882,7 @@ void editor_del_char(void)
             }
             else
             {
-                E.cx = prev_line->len;
+                E.cx = ecx_prevline;
                 E.cy--;
                 editor_update_syntax(E.cy);
             }
@@ -964,6 +965,19 @@ void editor_undo(void)
                                    .len = last_action.line_len,
                                    .hl = NULL,
                                    .hl_open_comment = 0};
+
+            // The deleted line's content was merged onto the previous line at delete
+            // time (editor_del_char). Strip that merged suffix back off before
+            // reinserting the recreated line, or the text ends up duplicated.
+            if (last_action.row > 0)
+            {
+                EditorLine* prev_line = &E.lines.elements[last_action.row - 1];
+                prev_line->len -= last_action.line_len;
+                prev_line->text[prev_line->len] = '\0';
+                prev_line->text = realloc(prev_line->text, prev_line->len + 1);
+                editor_update_syntax(last_action.row - 1);
+            }
+
             editor_lines_array_insert(&E.lines, last_action.row, new_line);
             // Transfer ownership: clear the action's line_content to avoid double-free
             E.undo_history[E.undo_history_idx].line_content = NULL;
