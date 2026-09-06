@@ -806,8 +806,13 @@ void editor_del_char(void)
     else
     {
         action.type = ACTION_DELETE_LINE;
-        action.line_content = strdup(E.lines.elements[E.cy].text);
-        action.line_len = E.lines.elements[E.cy].len;
+        if (E.recording_actions)
+        {
+            // editor_record_action() drops the action without freeing it when
+            // recording is off, so only allocate when it will actually be kept.
+            action.line_content = strdup(E.lines.elements[E.cy].text);
+            action.line_len = E.lines.elements[E.cy].len;
+        }
     }
     editor_record_action(action);
     if (E.select_all_active)
